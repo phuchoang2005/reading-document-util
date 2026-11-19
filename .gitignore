@@ -5,7 +5,7 @@
 node_modules/
 dist/
 build/
-util/public/docs/
+public/docs/
 .astro/
 .next/
 coverage/
@@ -16,4 +16,4 @@ coverage/
 !.env.example
 
 # Generated self-contained API reference
-util/public/redoc.html
+public/redoc.html
