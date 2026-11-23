@@ -6,6 +6,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
+require('./load-env.cjs');
 
 const ROOT = path.resolve(process.env.DOCS_ROOT || path.resolve(__dirname, '..'));
 const TOOL_ROOT = path.resolve(__dirname);

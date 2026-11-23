@@ -1,3 +1,4 @@
+import './load-env.cjs';
 import { readdir } from 'node:fs/promises';
 import { isAbsolute, relative, resolve, sep } from 'node:path';
 

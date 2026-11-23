@@ -16,7 +16,7 @@ project/
       system.md
       system.svg
       system.puml
-  reader/                 # this tool; DOCS_ROOT=../docs
+  reader/                 # this tool; set DOCS_ROOT=../docs in .env
 ```
 
 Any number of nested folders works. At least one `.md` file is required. A root `README.md` supplies the site title and introduction; without one, the folder name is used. Folder README files appear in navigation. Hidden folders, build output, dependencies, and this tool's own directory are excluded.
@@ -45,13 +45,15 @@ Node.js 20.19+ is required. Run commands from this tool directory:
 
 ```sh
 npm ci
-DOCS_ROOT=../docs npm run dev
+cp .env.example .env
+# Edit .env to set DOCS_ROOT=../docs for the layout above.
+npm run dev
 ```
 
-Open the URL printed by Astro, usually `http://localhost:4321`. Omit `DOCS_ROOT` when the parent folder itself contains the documents. `DOCS_ROOT` accepts an absolute or tool-directory-relative path. Restart the dev server after adding documents or changing generated diagram sources.
+Open the URL printed by Astro, usually `http://localhost:4321`. The scripts load `.env` from this tool directory. `DOCS_ROOT=..` reads the parent folder; change it to `../docs` for the example layout, or use an absolute path. You can also omit `.env` entirely to use the parent folder by default. Shell environment variables take precedence over `.env` values. Restart the dev server after changing `.env`, adding documents, or changing generated diagram sources.
 
 ```sh
-DOCS_ROOT=../docs npm run build
+npm run build
 npm run preview
 ```
 
@@ -59,10 +61,15 @@ The build validates Mermaid blocks, generates PlantUML/BPMN SVGs when present, c
 
 ## Optional OpenAPI reference
 
-Set `OPENAPI_SPEC` to an OpenAPI YAML or JSON file inside `DOCS_ROOT`. Its path is relative to the document root unless absolute. The build then validates it with Redocly and produces `/redoc.html`; without it, API validation and ReDoc generation are skipped.
+Set `OPENAPI_SPEC` in `.env` to an OpenAPI YAML or JSON file inside `DOCS_ROOT`. Its path is relative to the document root unless absolute. The build then validates it with Redocly and produces `/redoc.html`; when empty, API validation and ReDoc generation are skipped. For example:
 
-```sh
-DOCS_ROOT=../docs OPENAPI_SPEC=architecture/openapi.yaml npm run build
+```dotenv
+DOCS_ROOT=../docs
+OPENAPI_SPEC=architecture/openapi.yaml
+DOCS_TITLE=API Reference
 ```
 
-`DOCS_TITLE` optionally changes the generated ReDoc page title. `npm run validate:api` checks the configured specification, and `npm run docs:api` regenerates ReDoc. Link to `/redoc.html` from a Markdown page if you want it in the documentation navigation.
+`DOCS_TITLE` optionally changes the generated ReDoc page title. `npm run validate:api` checks the configured specification, and `npm run docs:api` regenerates ReDoc. 
+
+>[!NOTE]
+> Link to `/redoc.html` from a Markdown page if you want it in the documentation navigation.
