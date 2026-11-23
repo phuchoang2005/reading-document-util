@@ -7,11 +7,10 @@
   },
   "scripts": {
     "dev": "npm run diagrams:build && npm run docs:prepare && astro dev",
-    "build": "npm run validate:mermaid && npm run diagrams:build && npm run docs:prepare && astro build",
+    "build": "npm run validate:sequences && npm run diagrams:build && npm run docs:prepare && astro build",
     "preview": "astro preview",
     "diagrams:build": "node toSvg.js",
     "validate:sequences": "node validate-sequences.mjs",
-    "validate:mermaid": "node validate-sequences.mjs",
     "docs:prepare": "node copy-assets.mjs && node validate-api.mjs && node build-redoc.mjs",
     "docs:api": "node build-redoc.mjs",
     "validate:api": "node validate-api.mjs"
