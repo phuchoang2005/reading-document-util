@@ -1,22 +1,68 @@
-# Documentation reader and diagram build
+# Markdown documentation reader
 
-This folder owns the Astro documentation reader and all build scripts. npm uses the existing `package.json` and `package-lock.json`.
+An Astro site for browsing a folder of Markdown documents. It renders Mermaid code blocks in the browser, displays linked images and files, and provides a zoom viewer for diagrams. The build can generate SVGs from PlantUML (`.puml`) and BPMN 2.0 (`.bpmn`) sources.
 
-- `npm run diagrams:build`: `toSvg.js` generates sibling SVG files from all committed `.puml` and `.bpmn` sources. PlantUML runs headless; the BPMN 2.0 XML is rendered from its BPMN-DI geometry by the same JavaScript file.
-- `npm run validate:mermaid`: checks every Mermaid block (flowchart, class, ER, sequence and other supported types) using the real parser with a DOM environment. Invalid diagrams fail the command. `validate:sequences` remains a compatibility alias; no diagram type is skipped.
-- `npm run build`: copies assets and builds the Astro reader. Run `diagrams:build` and `validate:mermaid` first.
+## Set up a document folder
 
-Generated SVGs, copied assets and build output are ignored by Git. Commit the PlantUML/BPMN sources and `toSvg.js`; SVGs are recreated during the npm build.
+Put this tool in a folder beside your documentation, or set `DOCS_ROOT` to the folder you want to read. The default document root is the parent of this tool directory. A dedicated documentation folder is recommended:
 
-## API reference
+```text
+project/
+  docs/
+    README.md
+    getting-started.md
+    architecture/
+      README.md
+      system.md
+      system.svg
+      system.puml
+  reader/                 # this tool; DOCS_ROOT=../docs
+```
 
-From `util/`, run `npm ci`, then `npm run dev`. Open the reader URL shown in the terminal (normally `http://localhost:4321`) and select [API Contract](../SolutionArchitecture/api-contract/index.md), then **Open ReDoc**. The direct web route is `/redoc.html`. ReDoc uses the same OpenAPI file as the contract index.
+Any number of nested folders works. At least one `.md` file is required. A root `README.md` supplies the site title and introduction; without one, the folder name is used. Folder README files appear in navigation. Hidden folders, build output, dependencies, and this tool's own directory are excluded.
 
-- `npm run validate:api`: Redocly OpenAPI lint plus UC inventory, references, schema reachability, cursor and edit-precondition checks. Localhost is the intentional development server; no project license has been assigned, so those two metadata warnings are disabled.
-- `npm run docs:api`: regenerate `public/redoc.html` after editing OpenAPI. ReDocly is pinned in the lockfile; the HTML embeds the spec and renderer with telemetry off. It needs no running marketplace backend. Redoc branding assets may still use its CDN.
-- `npm run docs:prepare`: copy raw documentation assets and rebuild ReDoc. `dev` runs this at startup; after changing OpenAPI during a dev session, run it again and reload the page.
-- `npm run build`: validate the API, prepare assets, then build the static reader. `npm run preview` serves the generated `dist/`, including `/redoc.html` and the downloadable YAML under `/docs/SolutionArchitecture/api-contract/openapi.yaml`.
+Use relative links from the Markdown file to other pages and assets:
 
-Generated `public/redoc.html` is ignored. Commit the source contract, scripts, configuration and lockfile. `DOCS_ROOT` can select another documentation root for the reader/asset/ReDoc scripts; the npm lint command intentionally validates this repository's contract.
+```markdown
+[System design](./architecture/system.md)
+![System diagram](./architecture/system.svg)
+```
 
-ReDoc generation follows the official [Redocly build-docs interface](https://redocly.com/docs/cli/commands/build-docs), using `--inlineBundle` and `telemetry: off`.
+Use a fenced `mermaid` block for a diagram rendered in the browser:
+
+````markdown
+```mermaid
+flowchart LR
+  A[Start] --> B[Finish]
+```
+````
+
+For PlantUML or BPMN, put the source beside its generated SVG and link the `.svg` from Markdown. `npm run build` generates SVGs before copying assets. PlantUML requires the `plantuml` command and Java; it is needed only when `.puml` files exist. BPMN sources must include BPMN-DI layout data supported by the generator.
+
+## Run the reader
+
+Node.js 20.19+ is required. Run commands from this tool directory:
+
+```sh
+npm ci
+DOCS_ROOT=../docs npm run dev
+```
+
+Open the URL printed by Astro, usually `http://localhost:4321`. Omit `DOCS_ROOT` when the parent folder itself contains the documents. `DOCS_ROOT` accepts an absolute or tool-directory-relative path. Restart the dev server after adding documents or changing generated diagram sources.
+
+```sh
+DOCS_ROOT=../docs npm run build
+npm run preview
+```
+
+The build validates Mermaid blocks, generates PlantUML/BPMN SVGs when present, copies assets, and writes the static site to `dist/`. `npm run validate:mermaid`, `npm run diagrams:build`, and `npm run docs:prepare` can be run separately. `validate:sequences` is a compatibility alias for `validate:mermaid`.
+
+## Optional OpenAPI reference
+
+Set `OPENAPI_SPEC` to an OpenAPI YAML or JSON file inside `DOCS_ROOT`. Its path is relative to the document root unless absolute. The build then validates it with Redocly and produces `/redoc.html`; without it, API validation and ReDoc generation are skipped.
+
+```sh
+DOCS_ROOT=../docs OPENAPI_SPEC=architecture/openapi.yaml npm run build
+```
+
+`DOCS_TITLE` optionally changes the generated ReDoc page title. `npm run validate:api` checks the configured specification, and `npm run docs:api` regenerates ReDoc. Link to `/redoc.html` from a Markdown page if you want it in the documentation navigation.

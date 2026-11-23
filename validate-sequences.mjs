@@ -1,7 +1,8 @@
-import { readdir, readFile } from 'node:fs/promises';
-import { resolve, relative } from 'node:path';
+import { readFile } from 'node:fs/promises';
+import { relative } from 'node:path';
 import { JSDOM } from 'jsdom';
 import { marked } from 'marked';
+import { docsRoot, walkFiles } from './docs-config.mjs';
 
 // Mermaid flowchart/class/ER parsers use DOMPurify even during syntax checks.
 const dom = new JSDOM('<!doctype html><html><body></body></html>');
@@ -9,16 +10,12 @@ globalThis.window = dom.window;
 globalThis.document = dom.window.document;
 const { default: mermaid } = await import('mermaid');
 mermaid.initialize({ startOnLoad: false, securityLevel: 'strict' });
-const root = resolve(import.meta.dirname, '..');
-const folders = ['BusinessAnalyst', 'SolutionArchitecture', 'ProductManager'];
+const root = docsRoot;
 let count = 0;
 let failures = 0;
 const types = new Map();
-async function scan(directory) {
-  for (const entry of await readdir(directory, { withFileTypes: true })) {
-    const path = resolve(directory, entry.name);
-    if (entry.isDirectory()) { await scan(path); continue; }
-    if (!entry.isFile() || !entry.name.endsWith('.md')) continue;
+async function scan() {
+  for (const path of (await walkFiles()).filter((file) => file.toLowerCase().endsWith('.md'))) {
     const tokens = marked.lexer(await readFile(path, 'utf8'));
     const diagrams = [];
     marked.walkTokens(tokens, token => {
@@ -40,8 +37,8 @@ async function scan(directory) {
   }
 }
 try {
-  for (const folder of folders) await scan(resolve(root, folder));
+  await scan();
   console.log(`Validated ${count - failures}/${count} Mermaid blocks; skipped 0`);
   for (const [type, total] of types) console.log(`  ${type}: ${total}`);
-  if (failures || count === 0) process.exitCode = 1;
+  if (failures) process.exitCode = 1;
 } finally { dom.window.close(); }

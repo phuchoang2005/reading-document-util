@@ -7,7 +7,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 
-const ROOT = path.resolve(__dirname, '..');
+const ROOT = path.resolve(process.env.DOCS_ROOT || path.resolve(__dirname, '..'));
+const TOOL_ROOT = path.resolve(__dirname);
 const SKIP = new Set(['node_modules', '.git', '.github', 'dist', 'public', '.astro']);
 const esc = (s = '') => String(s).replace(/[&<>"']/g, c => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;'
@@ -20,7 +21,7 @@ function findSources(dir, found = []) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     if (entry.name.startsWith('.')) continue;
     const file = path.join(dir, entry.name);
-    if (entry.isDirectory() && !SKIP.has(entry.name)) findSources(file, found);
+    if (entry.isDirectory() && !SKIP.has(entry.name) && file !== TOOL_ROOT) findSources(file, found);
     else if (entry.isFile() && /\.(puml|bpmn)$/i.test(entry.name)) found.push(file);
   }
   return found;

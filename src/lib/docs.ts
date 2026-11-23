@@ -23,7 +23,7 @@ export function getRootReadme(documents: Document[]): Document | undefined {
   return documents.find(({ path }) => path.toLowerCase() === 'readme.md');
 }
 
-const libraryIgnoredFileNames = new Set(['readme.md', 'claude.md', 'agents.md']);
+const libraryIgnoredFileNames = new Set(['claude.md', 'agents.md']);
 
 export function getLibraryDocuments(documents: Document[]): Document[] {
   return documents.filter(({ path }) => !libraryIgnoredFileNames.has(basename(path).toLowerCase()));
@@ -33,15 +33,20 @@ export function countDocuments(node: FolderNode): number {
   return node.document ? 1 : node.children.reduce((total, child) => total + countDocuments(child), 0);
 }
 
-const root = process.env.DOCS_ROOT ? resolve(process.env.DOCS_ROOT) : resolve(process.cwd(), '..');
-const utilityDirectory = basename(process.cwd());
-const ignored = new Set(['node_modules', utilityDirectory]);
+const utilityPath = resolve(import.meta.dirname, '../..');
+const root = resolve(process.env.DOCS_ROOT || resolve(utilityPath, '..'));
+const ignored = new Set(['node_modules', 'dist', 'public', 'build', '.astro', '.next', 'coverage']);
+
+export function getDocsRootName(): string {
+  return basename(root);
+}
 
 async function markdownFiles(directory: string): Promise<string[]> {
   const entries = await readdir(directory, { withFileTypes: true });
   const nested = await Promise.all(entries.map(async (entry) => {
     if (entry.name.startsWith('.') || ignored.has(entry.name)) return [];
     const target = join(directory, entry.name);
+    if (resolve(target) === utilityPath) return [];
     if (entry.isDirectory()) return markdownFiles(target);
     return entry.isFile() && entry.name.toLowerCase().endsWith('.md') ? [target] : [];
   }));
@@ -59,14 +64,7 @@ function firstUsefulLine(markdown: string): string {
 
 export async function getDocuments(): Promise<Document[]> {
   const files = await markdownFiles(root);
-  // Include setup instructions without indexing dependencies or generated files.
-  const utilityReadme = join(root, utilityDirectory, 'README.md');
-  try {
-    await readFile(utilityReadme, 'utf8');
-    files.push(utilityReadme);
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
-  }
+  if (!files.length) throw new Error(`No Markdown documents found in ${root}`);
   const documents = await Promise.all(files.map(async (file) => {
     const source = await readFile(file, 'utf8');
     const filePath = relative(root, file).split(sep).join('/');

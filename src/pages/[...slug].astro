@@ -2,7 +2,7 @@
 import { marked } from 'marked';
 import { posix } from 'node:path';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { getDocument, getDocuments, getRootReadme } from '../lib/docs';
+import { getDocument, getDocuments, getDocsRootName, getRootReadme } from '../lib/docs';
 
 export async function getStaticPaths() {
   const documents = await getDocuments();
@@ -48,7 +48,7 @@ renderer.code = (code, infostring, escaped) => {
 const html = await marked.parse(document.source, { gfm: true, breaks: false, renderer });
 const breadcrumbs = document.path.split('/');
 const rootReadme = getRootReadme(await getDocuments());
-const siteTitle = rootReadme?.title ?? 'Documentation';
+const siteTitle = rootReadme?.title ?? getDocsRootName();
 const siteInitial = siteTitle.trim().charAt(0).toUpperCase() || 'D';
 ---
 
@@ -224,7 +224,7 @@ const siteInitial = siteTitle.trim().charAt(0).toUpperCase() || 'D';
         });
         for (const [index, diagram] of diagrams.entries()) {
           try {
-            const { svg, bindFunctions } = await mermaid.render(`ecp-mermaid-${renderPass}-${index}`, diagram.source);
+            const { svg, bindFunctions } = await mermaid.render(`docs-mermaid-${renderPass}-${index}`, diagram.source);
             diagram.element.innerHTML = svg;
             diagram.element.dataset.rendered = 'true';
             diagram.element.removeAttribute('data-error');
