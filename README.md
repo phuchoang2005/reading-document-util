@@ -53,6 +53,7 @@ npm run dev
 Open the URL printed by Astro, usually `http://localhost:4321`. The scripts load `.env` from this tool directory. `DOCS_ROOT=..` reads the parent folder; change it to `../docs` for the example layout, or use an absolute path. You can also omit `.env` entirely to use the parent folder by default. Shell environment variables take precedence over `.env` values. Restart the dev server after changing `.env`, adding documents, or changing generated diagram sources.
 
 ```sh
+npm run diagrams:build # for the first time.
 npm run build
 npm run preview
 ```
