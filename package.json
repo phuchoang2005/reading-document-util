@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "npm run diagrams:build && npm run docs:prepare && astro dev",
-    "build": "npm run validate:sequences && npm run diagrams:build && npm run docs:prepare && astro build",
+    "build": "npm run validate:sequences && npm run docs:prepare && astro build",
     "preview": "astro preview",
     "diagrams:build": "node toSvg.js",
     "validate:sequences": "node validate-sequences.mjs",
