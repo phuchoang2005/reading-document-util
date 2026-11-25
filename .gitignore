@@ -1,5 +1,6 @@
 # Generated diagrams (recreated by the documentation build)
 *.svg
+!favicon.svg
 
 # Local build output and dependencies
 node_modules/
